@@ -1,0 +1,94 @@
+##
+## EPITECH PROJECT, 2019
+## Makefile
+## File description:
+## makefile for bistro-matic
+##
+
+SRC		=		src/*.cpp \
+				src/map/*.cpp \
+
+
+SRCT 	=		./tests/
+
+NAME	=		minesSweeper
+
+FLAGS	=		-Wall -Wextra -std=c++14 -lm -lsfml-graphics -lsfml-window -lsfml-system -pthread
+
+TFLAG 	= 		-lcriterion --coverage -fprofile-arcs
+
+COV 	=		--exclude tests/ -o coverage.html
+
+none:
+	cd build && cmake .. && make -j 8
+	cp buid/
+
+all:
+	g++ -o $(NAME) $(SRC) $(FLAGS)
+
+allO4:
+	g++ -o $(NAME) $(SRC) $(FLAGS) -Ofast
+
+clear:
+	clear
+	clear
+
+run: clear all
+	./$(NAME)
+	make fclean
+
+runO4: allO4
+	./$(NAME)
+	make fclean
+
+clean:
+	rm -f *.html
+	rm -f *.gcno
+	rm -f *.gcda
+	rm -f $(NAME)
+
+fclean:	clean
+	#rm -f $(NAME)
+	rm -f *.gcno
+	rm -f *.gcda
+	rm -f *.html
+	rm -f vgcore.*
+	rm -f callgrind.*
+
+re: fclean all
+
+tests_run: fclean
+	g++ -o $(NAME) $(SRC) $(SRCT) $(TFLAG) $(FLAGS)
+	-./$(NAME)
+	gcovr --exclude tests/
+	gcovr --html $(COV) --html-title $(NAME) --html-details
+	rm -f *.gcno
+	rm -f *.gcda
+
+SUPP = --suppressions=./valSup.supp #--gen-suppressions=all
+
+valgrind: fclean
+	clear
+	clear
+	g++ -g -o $(NAME) $(SRC) $(FLAGS)
+	valgrind --leak-check=full --track-origins=yes --show-leak-kinds=definite $(SUPP) ./$(NAME) | cat -e #&> valgrind_log
+
+hellgrind: fclean
+	clear
+	clear
+	g++ -g -o $(NAME) $(SRC) $(FLAGS)
+	valgrind --tool=helgrind --read-var-info=yes ./$(NAME) | cat -e #&> valgrind_log
+
+callgrind: fclean
+	rm -f callgrind.*
+	clear
+	g++ -g -o $(NAME) $(SRC) $(FLAGS)
+	-valgrind --tool=callgrind ./$(NAME)
+	-kcachegrind callgrind.*
+
+callgrindO6: fclean
+	rm -f callgrind.*
+	clear
+	g++ -g -o $(NAME) $(SRC) $(FLAGS) -O6
+	-valgrind --tool=callgrind ./$(NAME)
+	-kcachegrind callgrind.*
