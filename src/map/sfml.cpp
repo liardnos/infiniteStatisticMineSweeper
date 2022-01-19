@@ -74,7 +74,8 @@ bool SfmlDisplay::display(){
             auto m = event.mouseButton;
             int x = round((m.x-_posx*_cellSize - _height/2.f)/_cellSize-0.5);
             int y = round((m.y-_posy*_cellSize - _height/2.f)/_cellSize-0.5);
-            _map->clickOnCell(x, y);
+            if (_map->clickOnCell(x, y))
+                _map->reset();
         } else if (event.type == sf::Event::MouseWheelMoved){
             float d = event.mouseWheel.delta;
             if (_fontSize + d > 1){

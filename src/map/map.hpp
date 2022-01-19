@@ -69,13 +69,21 @@ public:
 
     Cell *&acess(Vector2i &vec);
     Map(float dificulty = 0.2);
+    void init();
+
 
     ~Map();
     bool clickOnCell(int x, int y);
+    void mineDisplacement(int x, int y, bool mine_here);
+
+
     bool validate(std::deque<Cell *> &list);
     
     Part *generatePartUndiscover(Cell *cell, Part *part, Cell *cell_o);
     Part *generatePart(Cell *cell, Part *part = 0);
+
+    void reset();
+
     void brutetalizing(Part *part, int mirador_inc);
     void evaluatorlv2(Cell *cell);
     void estimatorlv2(int nb = 1);
@@ -87,6 +95,7 @@ public:
     void insertYMin();
     void insertYMax();
     void displayOnTerm();
+
 
     std::mutex _XYminmax_mutex;
         int _Xmin = -1;

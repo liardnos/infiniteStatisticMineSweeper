@@ -61,6 +61,25 @@ Cell *&Map::acess(Vector2i &vec) {
 Map::Map(float dificulty) :
     _dificulty(dificulty)
 {
+    this->init();
+}
+
+void Map::init() {
+    _Xmin = -1;
+    _Ymin= -1;
+    _Xmax = -1;
+    _Ymax= -1;
+    _nbCellDiscovered = 0;
+    _list_size = 0;
+    _toEstimate_size = 0;
+    _toEstimatelv2_size = 0;
+
+    for (std::vector<Cell *> *line : _grid) {
+        for (Cell *cell : *line)
+            delete cell;
+        delete line;
+    }
+
     _grid.resize(3);
     int x = -1;
     for (std::vector<Cell *> *&vec : _grid){ 
@@ -83,13 +102,60 @@ Map::~Map() {
     }
 }
 
+
+
+void Map::mineDisplacement(int x, int y, bool mine_here) {
+    std::vector<Cell *> workingArea;
+    std::deque<Cell *> toCheck = {acess(x, y)};
+    int i = 0;
+    std::cout << "wtf" << std::endl;
+    while (toCheck.size() && i < 1) {
+        i++;
+        Cell *cell = toCheck.front();
+        toCheck.pop_front();
+
+        if (cell->_proba == 1 || cell->_proba == 0)
+            continue;
+        std::cout << "_bruteInc" << cell->_bruteInc << std::endl;
+
+        for (int x = 0; x < 3; ++x) {
+            for (int y = 0; y < 3; ++y) {
+                if (x || y)
+                    toCheck.push_back(acess(cell->_x + x, cell->_y + y));
+            }
+        }
+    }
+}
+
 bool Map::clickOnCell(int x, int y){
     _grid_mutex.lock_read();
     Cell * const &cell = acess(x, y);
+    std::cout << "proba=" << cell->_proba << std::endl;
+    
+    
+    
+    // statistic displacement way
+    if (cell->_proba != 0) {
+        // lose
+        cell->_proba = 1;
+        cell->_certitude = 1;
+
+        // displace mines acording to this
+        //cell->_type = Cell::CellType::MINE;
+        mineDisplacement(x, y, true);
+
+        //
+    }
+    //
+
+    /*/ standard losing way
     if (cell->_type == Cell::CellType::MINE){
         _grid_mutex.unlock_read();
+        std::cout << "DEAD" << std::endl;
         return true;
     }
+    /*/
+
     _grid_mutex.unlock_read();
     _list_mutex.lock();
     _list.push_front(Vector2i(x, y));
@@ -176,6 +242,10 @@ Part *Map::generatePart(Cell *cell, Part *part) {
             }
         }
     return part;
+}
+
+void Map::reset() {
+    init();
 }
 
 bool simCompleted(Part *part) {
