@@ -89,20 +89,10 @@ void Map::init() {
     _toEstimate_size = 0;
     _toEstimatelv2_size = 0;
 
-    for (std::pair<uint64_t, Cell *> cell : _mapGrid)
+    for (std::pair<uint64_t, Cell *> cell : _mapGrid) {
         delete cell.second;
+    }
 
-//    _grid.resize(3);
-    // int x = -1;
-    // for (std::vector<Cell *> *&vec : _grid){ 
-    //     vec = new std::vector<Cell *>;
-    //     int y = -1;
-    //     for (int i = 0; i < 3; ++i){
-    //         vec->insert(vec->end(), new Cell(0, x, y));
-    //         y++;
-    //     }
-    //     x++;
-    // }
     Cell *cell = acess(0, 0);
     cell->_proba = 0;
     cell->_type = Cell::CellType::EMPTY;
@@ -111,7 +101,6 @@ void Map::init() {
     for (int x = -1; x <= 1; ++x)
         for (int y = -1; y <= 1; ++y)
             Cell *cell = acess(x, y);
-    // std::cout << __LINE__ << std::endl;
     clickOnCell(0, 0);
 }
 
@@ -120,51 +109,24 @@ Map::~Map() {
         delete cell.second;
 }
 
-
-
-/*void Map::mineDisplacement(int x, int y, bool mine_here) {
-    std::vector<Cell *> workingArea;
-    std::deque<Cell *> toCheck = {acess(x, y)};
-    int i = 0;
-    std::cout << "wtf" << std::endl;
-    while (toCheck.size() && i < 1) {
-        i++;
-        Cell *cell = toCheck.front();
-        toCheck.pop_front();
-
-        if (cell->_proba == 1 || cell->_proba == 0)
-            continue;
-        std::cout << "_bruteInc" << cell->_bruteInc << std::endl;
-
-        for (int x = 0; x < 3; ++x) {
-            for (int y = 0; y < 3; ++y) {
-                if (x || y)
-                    toCheck.push_back(acess(cell->_x + x, cell->_y + y));
-            }
-        }
-    }
-}*/
-
 bool Map::clickOnCell(int x, int y){
+    bool ret = false;
     _grid_mutex.lock_read();
     Cell * const &cell = acess(x, y);
-    std::cout << "proba=" << cell->_proba << std::endl;
-    
     
     // statistic displacement way
     if (cell->_proba > 0) {
         // lose
+        ret = true;
+        cell->_hasExplode = true;
         cell->_proba = 1;
         cell->_type = Cell::CellType::MINE;
         cell->_certitude = 1;
 
         // displace mines acording to this
-        //cell->_type = Cell::CellType::MINE;
-        //mineDisplacement(x, y, true);
         for (int x = -1; x <= 1; ++x)
             for (int y = -1; y <= 1; ++y)
                 estimatorCell({cell->_x+x, cell->_y+y});
-
         //
     } else {
         cell->_type = Cell::CellType::EMPTY;
@@ -173,19 +135,8 @@ bool Map::clickOnCell(int x, int y){
         _list_mutex.unlock();
     }
     //
-
-    /*/ standard losing way
-    if (cell->_type == Cell::CellType::MINE){
-        _grid_mutex.unlock_read();
-        std::cout << "DEAD" << std::endl;
-        return true;
-    }
-    /*/
-
     _grid_mutex.unlock_read();
-    
-    //estimatorCell(Vector2i(x, y));
-    return false;
+    return ret;
 }
 
 bool Map::validate(std::deque<Cell *> &list) {
@@ -231,7 +182,7 @@ Part *Map::generatePartUndiscover(Cell *cell, Part *part, Cell *cell_o) {
     part->undiscover.push_back(cell);
     cell->_brutalised = true;
     cell->_mark = true;
-    if (cell->_certitude == 1.0 && (cell->_proba == 1 || cell->_proba == 0))
+    if ((cell->_proba == 1 || cell->_proba == 0))
         return part;
     cell->_certitude = 0;
     for (int x = -1; x <= 1; ++x)

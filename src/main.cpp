@@ -13,7 +13,8 @@ int main(int argc, char **argv)
     }
     Map map(dif);
 
-    SfmlDisplay sfml(&map, 800, 800);
+    SfmlDisplay sfml(&map, 1920-20, 1080-20);
+    sfml._window->setPosition({0, 0});
     map._sfml = &sfml;
     sfml.main_loop();
 

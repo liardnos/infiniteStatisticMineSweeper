@@ -72,10 +72,15 @@ bool SfmlDisplay::display(){
             _window->close();
         else if (event.type == sf::Event::MouseButtonPressed) {
             auto m = event.mouseButton;
-            int x = round((m.x-_posx*_cellSize - _height/2.f)/_cellSize-0.5);
+            int x = round((m.x-_posx*_cellSize - _width/2.f)/_cellSize-0.5);
             int y = round((m.y-_posy*_cellSize - _height/2.f)/_cellSize-0.5);
-            if (_map->clickOnCell(x, y))
-                _map->reset();
+            
+            if (m.button == sf::Mouse::Button::Left)
+                if (_map->clickOnCell(x, y));   
+                    //_map->reset();
+            else if (m.button == sf::Mouse::Button::Right)
+                ;
+            
         } else if (event.type == sf::Event::MouseWheelMoved){
             float d = event.mouseWheel.delta;
             if (_fontSize + d > 1){
@@ -93,9 +98,9 @@ bool SfmlDisplay::display(){
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
             _posx -= 0.25;
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Z))
-            _posy += 0.25;            
+            _posy += 0.25;
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S))
-            _posy -= 0.25;            
+            _posy -= 0.25;
     }
 
 
@@ -114,11 +119,14 @@ bool SfmlDisplay::display(){
     sf::RectangleShape rectangle3(sf::Vector2f(_cellSize-2, _cellSize-2));
     rectangle3.setFillColor({0, 0, 255});
 
+    sf::RectangleShape rectangle_has_explode(sf::Vector2f(_cellSize-2, _cellSize-2));
+    rectangle_has_explode.setFillColor({255, 0, 0, 255});
+
     static sf::Text *text = 0;
-    text = new sf::Text();
-    text->setFont(_font);
-
-
+    if (!text) {
+        text = new sf::Text();
+        text->setFont(_font);
+    }
     text->setCharacterSize(_fontSize);
 
     sf::Color colors[10] = {
@@ -130,8 +138,8 @@ bool SfmlDisplay::display(){
 
     sf::RectangleShape *rect = &rectangle1;
     _map->_XYminmax_mutex.lock();
-    int Xstart = round((0-_posx*_cellSize - _height/2.f)/_cellSize-0.5) - 1;
-    int Xend = round((_width-_posx*_cellSize - _height/2.f)/_cellSize-0.5) + 1;
+    int Xstart = round((0-_posx*_cellSize - _width/2.f)/_cellSize-0.5) - 1;
+    int Xend = round((_width-_posx*_cellSize - _width/2.f)/_cellSize-0.5) + 1;
     int Ystart = round((0-_posy*_cellSize - _height/2.f)/_cellSize-0.5) - 1;
     int Yend = round((_height-_posy*_cellSize - _height/2.f)/_cellSize-0.5) + 1;
     _map->_XYminmax_mutex.unlock();
@@ -162,29 +170,41 @@ bool SfmlDisplay::display(){
                 text->setPosition((int)(_posx*_cellSize + (x+0.5)*_cellSize + _width/2 - bounds.width/2), (int)(_posy*_cellSize + (y+0.5)*_cellSize + _height/2 - bounds.height/2*1.75));
                 _window->draw(*text);
             } else {
-                text->setCharacterSize(_fontSize/3);
-                rect = &rectangle1;
+                if (cell->_hasExplode)
+                    rect = &rectangle_has_explode;
+                else 
+                    rect = &rectangle1;
+
                 rect->setPosition(_posx*_cellSize + x*_cellSize + _width/2, _posy*_cellSize + y*_cellSize + _height/2);
                 _window->draw(*rect);
-                //draw proba
-                text->setFillColor(colorRatio(sf::Color::Red, sf::Color::Green, cell->_proba));
-                text->setString(std::to_string(cell->_proba).substr(0, 5));
-                auto bounds = text->getGlobalBounds();
-                text->setPosition((int)(_posx*_cellSize + (x+0.5)*_cellSize + _width/2 - bounds.width/2), (int)(_posy*_cellSize + (y+0.5)*_cellSize + _height/2 - bounds.height/2*1.75));
-                _window->draw(*text);
-                //draw certitude
-                text->setFillColor(colorRatio(sf::Color::Red, sf::Color::Green, 1-cell->_certitude));
+                if (cell->_hasExplode)
+                    rect->setFillColor({255, 0, 0, 255});
+                
+                if (1) {
+                    //draw proba
+                    text->setCharacterSize(_fontSize/3);
+                    text->setFillColor(colorRatio(sf::Color::Red, sf::Color::Green, cell->_proba));
+                    text->setString(std::to_string(cell->_proba).substr(0, 5));
+                    auto bounds = text->getGlobalBounds();
+                    text->setPosition((int)(_posx*_cellSize + (x+0.5)*_cellSize + _width/2 - bounds.width/2), (int)(_posy*_cellSize + (y+0.5)*_cellSize + _height/2 - bounds.height/2*1.75));
+                    _window->draw(*text);
+                    //draw certitude
+                    text->setFillColor(colorRatio(sf::Color::Red, sf::Color::Green, 1-cell->_certitude));
+                    text->setCharacterSize(_fontSize/4);
+                    text->setString(std::to_string(cell->_certitude).substr(0, 5));
+                    auto bounds2 = text->getGlobalBounds();
+                    text->setPosition((int)(_posx*_cellSize + (x+0.5)*_cellSize + _width/2 - bounds2.width/2), (int)(_posy*_cellSize + (y+0.5)*_cellSize + _height/2 + bounds.height*0.75));
+                    _window->draw(*text);
+                }
+            }
+            if (0) {
+                // draw pos
                 text->setCharacterSize(_fontSize/4);
-                text->setString(std::to_string(cell->_certitude).substr(0, 5));
-                auto bounds2 = text->getGlobalBounds();
-                text->setPosition((int)(_posx*_cellSize + (x+0.5)*_cellSize + _width/2 - bounds2.width/2), (int)(_posy*_cellSize + (y+0.5)*_cellSize + _height/2 + bounds.height*0.75));
+                text->setFillColor(sf::Color::White);
+                text->setString(" (" + std::to_string(cell->_x).substr(0, 3) + ", " + std::to_string(cell->_y).substr(0, 3) + ")");
+                text->setPosition((int)(_posx*_cellSize + x*_cellSize + _height/2), (int)(_posy*_cellSize + (y)*_cellSize + _width/2));
                 _window->draw(*text);
             }
-            text->setCharacterSize(_fontSize/4);
-            text->setFillColor(sf::Color::White);
-            text->setString(" (" + std::to_string(cell->_x).substr(0, 3) + ", " + std::to_string(cell->_y).substr(0, 3) + ")");
-            text->setPosition((int)(_posx*_cellSize + x*_cellSize + _height/2), (int)(_posy*_cellSize + (y)*_cellSize + _width/2));
-            _window->draw(*text);
 
             if (cell->_updated){
                 _map->_grid_mutex.unlock_read();

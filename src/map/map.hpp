@@ -49,6 +49,7 @@ public:
     float _certitude = 0;
     unsigned char _updated = false;
     bool _mark = false;
+    bool _hasExplode = false;
 };
 
 struct Vector2i {
