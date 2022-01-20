@@ -34,8 +34,9 @@ SfmlDisplay::~SfmlDisplay() {
 }
 
 void SfmlDisplay::main_loop(){
-    std::thread predition_thread([this](){
-        while (1) {
+    bool go = true;
+    std::thread predition_thread([this, &go](){
+        while (go) {
             this->_map->generate(1E6);
             std::this_thread::sleep_for(std::chrono::microseconds((int)1E6/60));
         }
@@ -43,9 +44,12 @@ void SfmlDisplay::main_loop(){
     while (_window->isOpen()) {
         display();
 
-        //if (_map->_list.size() == 0 && _map->_toEstimate.size() == 0 && _map->_toEstimatelv2.size() == 0)
-        //    _window->close();
+        // for benchamrk
+        // if (_map->_list.size() == 0 && _map->_toEstimate.size() == 0 && _map->_toEstimatelv2.size() == 0)
+        //     _window->close();
     }
+    go = false;
+    predition_thread.join();
 }
 
 unsigned char SfmlDisplay::colorR(unsigned char a, unsigned char b, float r){
@@ -155,7 +159,7 @@ bool SfmlDisplay::display(){
             }
 
             if (cell->_discovered == true){
-                text->setCharacterSize(_fontSize);
+                //text->setCharacterSize(_fontSize);
                 rect = &rectangle2;
                 rect->setPosition(_posx*_cellSize + x*_cellSize + _width/2, _posy*_cellSize + y*_cellSize + _height/2);
                 _window->draw(*rect);
@@ -180,7 +184,7 @@ bool SfmlDisplay::display(){
                 if (cell->_hasExplode)
                     rect->setFillColor({255, 0, 0, 255});
                 
-                if (1) {
+                if (0) {
                     //draw proba
                     text->setCharacterSize(_fontSize/3);
                     text->setFillColor(colorRatio(sf::Color::Red, sf::Color::Green, cell->_proba));

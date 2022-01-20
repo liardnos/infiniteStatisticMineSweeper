@@ -7,7 +7,7 @@ int main(int argc, char **argv)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
-    float dif = 0.15;
+    float dif = 0.3;
     if (argc == 2) {
         dif = std::stof(argv[1]);
     }
@@ -17,6 +17,5 @@ int main(int argc, char **argv)
     sfml._window->setPosition({0, 0});
     map._sfml = &sfml;
     sfml.main_loop();
-
-    std::cout << "END" << std::endl;
+    return 0;
 }

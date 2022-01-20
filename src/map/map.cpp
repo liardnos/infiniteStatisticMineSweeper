@@ -97,10 +97,6 @@ void Map::init() {
     cell->_proba = 0;
     cell->_type = Cell::CellType::EMPTY;
     cell->_certitude = 1;
-    std::cout << __LINE__ << std::endl;
-    for (int x = -1; x <= 1; ++x)
-        for (int y = -1; y <= 1; ++y)
-            Cell *cell = acess(x, y);
     clickOnCell(0, 0);
 }
 
@@ -181,7 +177,6 @@ Part *Map::generatePartUndiscover(Cell *cell, Part *part, Cell *cell_o) {
     std::vector<bPStruct> tab;
     part->undiscover.push_back(cell);
     cell->_brutalised = true;
-    cell->_mark = true;
     if ((cell->_proba == 1 || cell->_proba == 0))
         return part;
     cell->_certitude = 0;
@@ -206,7 +201,6 @@ Part *Map::generatePart(Cell *cell, Part *part) {
         part = new Part;
     part->mirador.push_back(cell);
     cell->_brutalised = true;
-    cell->_mark = true;
     for (int x = -1; x <= 1; ++x)
         for (int y = -1; y <= 1; ++y){
             Cell *cell2 = acess(cell->_x+x, cell->_y+y);
@@ -334,27 +328,24 @@ void Map::evaluatorlv2(Cell *cell) {
     brutetalizing(part, 0);
     _grid_mutex.lock_write();
     std::cout << "found " << part->tot << " posibility" << std::endl;
-    if (part->tot == 0) {
-        //for (Cell *cell : part->undiscover){
-            //cell->_proba = _dificulty;
-            //cell->_certitude = 0;
-            //cell->_updated = 255;
-        //}
-    } else {
-        for (Cell *cell : part->undiscover){
+    if (part->tot) {
+            for (Cell *cell : part->undiscover){
             cell->_proba = cell->_bruteInc/((float)part->tot);
             if (part->certitude == 1)
                 cell->_certitude = 1;
             cell->_updated = 255;
-            cell->_mark = false;
-            //if (cell->_proba == 0)
-                //clickOnCell(cell->_x, cell->_y);
+
+            // auto click
+            // if (cell->_proba == 0) {
+            //     _grid_mutex.unlock_write();
+            //     clickOnCell(cell->_x, cell->_y);
+            //     _grid_mutex.lock_write();
+            // }
+            //
+
         }
-        for (Cell *&cell : part->mirador)
-            cell->_mark = false;
     }
     _grid_mutex.unlock_write();
-
     std::cout << "END" << std::endl;
     delete part;
 }
@@ -454,7 +445,12 @@ void Map::estimator(int nb) {
                     Cell *cell = acess(vec.x+x, vec.y+y);
                     if (cell->_discovered == false && cell->_proba != 1 && cell->_proba != 0){
                         cell->_proba = 0;
-                        //clickOnCell(cell->_x, cell->_y);
+
+                        // auto click
+                        // _grid_mutex.unlock_write();
+                        // clickOnCell(cell->_x, cell->_y);
+                        // _grid_mutex.lock_write();
+                        //
                         cell->_certitude = 1;
                         estimatorCell(Vector2i(vec.x+x, vec.y+y));
                     }
@@ -527,56 +523,6 @@ void Map::generate(int nb){
         _list_mutex.unlock();
     }
 }
-
-/*void Map::insertXMin(){ // add ligne at top
-    _XYminmax_mutex.lock();
-    _Xmin--;
-    int y = 0;
-    std::vector<Cell *> *vec = new std::vector<Cell *>(_Ymax-_Ymin+1);
-    for (Cell *&cell : *vec){
-        cell = new Cell(_dificulty, _Xmin, y + _Ymin);
-        y++;
-    }
-    _grid.insert(_grid.begin(), vec);
-    _XYminmax_mutex.unlock();
-}
-
-void Map::insertXMax(){ // add ligne at bottom
-    _XYminmax_mutex.lock();
-    _Xmax++;
-    int y = 0;
-    std::vector<Cell *> *vec = new std::vector<Cell *>(_Ymax-_Ymin+1);
-    for (Cell *&cell : *vec){
-        cell = new Cell(_dificulty, _Xmax, y + _Ymin);
-        y++;
-    }
-    _grid.insert(_grid.end(), vec);
-    _XYminmax_mutex.unlock();
-}
-
-void Map::insertYMin(){ // add ligne at left
-    _XYminmax_mutex.lock();
-    _Ymin--;
-    int x = 0;
-    for (std::vector<Cell *> *&vec : _grid){
-        Cell *cell = new Cell(_dificulty, x + _Xmin, _Ymin);
-        vec->insert(vec->begin(), cell);
-        x++;
-    }
-    _XYminmax_mutex.unlock();
-}
-
-void Map::insertYMax(){ // add ligne at right
-    _XYminmax_mutex.lock();
-    _Ymax++;
-    int x = 0;
-    for (std::vector<Cell *> *&vec : _grid){
-        Cell *cell = new Cell(_dificulty, x + _Xmin, _Ymax);
-        vec->insert(vec->end(), cell);
-        x++;
-    }
-    _XYminmax_mutex.unlock();
-}*/
 
 void Map::displayOnTerm(){
     std::string sizeY;

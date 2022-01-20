@@ -40,16 +40,19 @@ public:
 
     bool _discovered = false;
     CellType _type;
-    int _bruteInc = -1;
-    bool _brutalised = false;
+    bool _hasExplode = false; // user click on this bomb
+    bool _flaged = false; // user flag this
     int _x;
     int _y;
-    int _nearMine = 0;
-    float _proba = NAN;
-    float _certitude = 0;
-    unsigned char _updated = false;
-    bool _mark = false;
-    bool _hasExplode = false;
+    int _nearMine = 0; // nb of mine's neigbour
+    float _proba = NAN; // proba to be a mine
+    float _certitude = 0; // certitude of the proba (if == 1 and (_proba == 0 or _proba == 1) don't recalculate this cell)
+
+    bool _brutalised = false; // debug // is curently behing brutalised
+    int _bruteInc = -1; // debug
+
+    unsigned char _updated = false; // debug // fading blue
+    bool _mark = false; // debug // red mark on cell
 };
 
 struct Vector2i {
