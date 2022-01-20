@@ -130,17 +130,22 @@ bool SfmlDisplay::display(){
 
     sf::RectangleShape *rect = &rectangle1;
     _map->_XYminmax_mutex.lock();
-    int Xstart = std::max(round((0-_posx*_cellSize - _height/2.f)/_cellSize-0.5) - 1, (double)_map->_Xmin);
-    int Xend = std::min(round((_width-_posx*_cellSize - _height/2.f)/_cellSize-0.5) + 1, (double)_map->_Xmax);
-    int Ystart = std::max(round((0-_posy*_cellSize - _height/2.f)/_cellSize-0.5) - 1, (double)_map->_Ymin);
-    int Yend = std::min(round((_height-_posy*_cellSize - _height/2.f)/_cellSize-0.5) + 1, (double)_map->_Ymax);
+    int Xstart = round((0-_posx*_cellSize - _height/2.f)/_cellSize-0.5) - 1;
+    int Xend = round((_width-_posx*_cellSize - _height/2.f)/_cellSize-0.5) + 1;
+    int Ystart = round((0-_posy*_cellSize - _height/2.f)/_cellSize-0.5) - 1;
+    int Yend = round((_height-_posy*_cellSize - _height/2.f)/_cellSize-0.5) + 1;
     _map->_XYminmax_mutex.unlock();
     for (int x = Xstart; x <= Xend; x++) {
         for (int y = Ystart; y <= Yend; y++){
             _map->_grid_mutex.lock_read();
             _map->_XYminmax_mutex.lock();
-            Cell *const cell = _map->acess(x, y);
+            Cell *const cell = _map->acessWeak(x, y);
             _map->_XYminmax_mutex.unlock();
+            if (!cell) {
+                _map->_grid_mutex.unlock_read();
+                continue;
+            }
+
             if (cell->_discovered == true){
                 text->setCharacterSize(_fontSize);
                 rect = &rectangle2;

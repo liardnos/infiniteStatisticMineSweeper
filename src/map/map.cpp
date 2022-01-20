@@ -16,6 +16,7 @@
 #include <math.h>
 #include <chrono>
 #include <ctime>  
+#include <string.h>  
 
 #include "sfml.hpp"
 #include "map.hpp"
@@ -29,33 +30,47 @@ Cell::Cell(float dificulty, int x, int y) {
 };  
 
 char Cell::getChar(){
-    if (_type == CellType::MINE)
-        return 'X';
+    //if (_type == CellType::MINE)
+    //    return 'X';
     if (_discovered == false)
         return '-';
     return '0' + _nearMine;
 }
 
-int Cell::calcNearMine(){
+int Cell::calcNearMine(Map &map){
+    int count = 0;
+        for (int x = -1; x <= 1; ++x)
+            for (int y = -1; y <= 1; ++y) {
+                Cell *cell = map.acess(_x+x, _y+y);
+                if (cell->_proba == 1)
+                    count++;
+                else if (cell->_proba == 0);
+                else if (cell->_type == Cell::CellType::MINE)
+                    count++;
+            }
     return _nearMine;
 }
 
+Cell *&Map::acessWeak(int x, int y) {
+    int pos2[2] = {x, y};
+    uint64_t pos = *(uint64_t*)pos2;
+    return _mapGrid[pos];
+}
 
-Cell *&Map::acess(int x, int y){
+Cell *&Map::acess(int x, int y) {
     Vector2i vec = {x, y};
     return acess(vec);
 }
 
 Cell *&Map::acess(Vector2i &vec) {
-    while (vec.x < _Xmin)
-        insertXMin();
-    while (vec.x > _Xmax)
-        insertXMax();
-    while (vec.y < _Ymin)
-        insertYMin();
-    while (vec.y > _Ymax)
-        insertYMax();
-    return (*_grid[vec.x-_Xmin])[vec.y-_Ymin];
+
+    int pos2[2] = {vec.x, vec.y};
+    uint64_t pos = *(uint64_t*)pos2;
+    Cell *&ptr = _mapGrid[pos];
+
+    if (!ptr)
+        ptr = new Cell(_dificulty, vec.x, vec.y);
+    return ptr;
 }
 
 Map::Map(float dificulty) :
@@ -74,37 +89,40 @@ void Map::init() {
     _toEstimate_size = 0;
     _toEstimatelv2_size = 0;
 
-    for (std::vector<Cell *> *line : _grid) {
-        for (Cell *cell : *line)
-            delete cell;
-        delete line;
-    }
+    for (std::pair<uint64_t, Cell *> cell : _mapGrid)
+        delete cell.second;
 
-    _grid.resize(3);
-    int x = -1;
-    for (std::vector<Cell *> *&vec : _grid){ 
-        vec = new std::vector<Cell *>;
-        int y = -1;
-        for (int i = 0; i < 3; ++i){
-            vec->insert(vec->end(), new Cell(0, x, y));
-            y++;
-        }
-        x++;
-    }
+//    _grid.resize(3);
+    // int x = -1;
+    // for (std::vector<Cell *> *&vec : _grid){ 
+    //     vec = new std::vector<Cell *>;
+    //     int y = -1;
+    //     for (int i = 0; i < 3; ++i){
+    //         vec->insert(vec->end(), new Cell(0, x, y));
+    //         y++;
+    //     }
+    //     x++;
+    // }
+    Cell *cell = acess(0, 0);
+    cell->_proba = 0;
+    cell->_type = Cell::CellType::EMPTY;
+    cell->_certitude = 1;
+    std::cout << __LINE__ << std::endl;
+    for (int x = -1; x <= 1; ++x)
+        for (int y = -1; y <= 1; ++y)
+            Cell *cell = acess(x, y);
+    // std::cout << __LINE__ << std::endl;
     clickOnCell(0, 0);
 }
 
 Map::~Map() {
-    for (std::vector<Cell *> *vec : _grid){
-        for (Cell *cell : *vec)
-            delete cell;
-        delete vec;
-    }
+    for (std::pair<uint64_t, Cell *> cell : _mapGrid)
+        delete cell.second;
 }
 
 
 
-void Map::mineDisplacement(int x, int y, bool mine_here) {
+/*void Map::mineDisplacement(int x, int y, bool mine_here) {
     std::vector<Cell *> workingArea;
     std::deque<Cell *> toCheck = {acess(x, y)};
     int i = 0;
@@ -125,7 +143,7 @@ void Map::mineDisplacement(int x, int y, bool mine_here) {
             }
         }
     }
-}
+}*/
 
 bool Map::clickOnCell(int x, int y){
     _grid_mutex.lock_read();
@@ -133,18 +151,26 @@ bool Map::clickOnCell(int x, int y){
     std::cout << "proba=" << cell->_proba << std::endl;
     
     
-    
     // statistic displacement way
-    if (cell->_proba != 0) {
+    if (cell->_proba > 0) {
         // lose
         cell->_proba = 1;
+        cell->_type = Cell::CellType::MINE;
         cell->_certitude = 1;
 
         // displace mines acording to this
         //cell->_type = Cell::CellType::MINE;
-        mineDisplacement(x, y, true);
+        //mineDisplacement(x, y, true);
+        for (int x = -1; x <= 1; ++x)
+            for (int y = -1; y <= 1; ++y)
+                estimatorCell({cell->_x+x, cell->_y+y});
 
         //
+    } else {
+        cell->_type = Cell::CellType::EMPTY;
+        _list_mutex.lock();
+        _list.push_front(Vector2i(x, y));
+        _list_mutex.unlock();
     }
     //
 
@@ -157,9 +183,7 @@ bool Map::clickOnCell(int x, int y){
     /*/
 
     _grid_mutex.unlock_read();
-    _list_mutex.lock();
-    _list.push_front(Vector2i(x, y));
-    _list_mutex.unlock();
+    
     //estimatorCell(Vector2i(x, y));
     return false;
 }
@@ -553,7 +577,7 @@ void Map::generate(int nb){
     }
 }
 
-void Map::insertXMin(){ // add ligne at top
+/*void Map::insertXMin(){ // add ligne at top
     _XYminmax_mutex.lock();
     _Xmin--;
     int y = 0;
@@ -601,7 +625,7 @@ void Map::insertYMax(){ // add ligne at right
         x++;
     }
     _XYminmax_mutex.unlock();
-}
+}*/
 
 void Map::displayOnTerm(){
     std::string sizeY;

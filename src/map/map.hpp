@@ -10,6 +10,7 @@
 
 
 #include <iostream>
+#include <unordered_map>
 #include <limits>
 #include <stdlib.h>
 #include <vector>
@@ -35,7 +36,7 @@ public:
 
     char getChar();
 
-    int calcNearMine();
+    int calcNearMine(Map &map);
 
     bool _discovered = false;
     CellType _type;
@@ -65,8 +66,10 @@ struct Part {
 
 class Map {
 public:
-    Cell *&acess(int x, int y);
+    //Cell *acessRead(int x, int y);
 
+    Cell *&acessWeak(int x, int y);
+    Cell *&acess(int x, int y);
     Cell *&acess(Vector2i &vec);
     Map(float dificulty = 0.2);
     void init();
@@ -112,7 +115,10 @@ public:
     std::deque<Vector2i> _toEstimate;
     std::deque<Vector2i> _toEstimatelv2;
     MySharedMutex _grid_mutex;
-    std::vector<std::vector<Cell *> *> _grid; //X Y
+
+    //std::vector<std::vector<Cell *> *> _grid; //X Y
+    std::unordered_map<uint64_t, Cell *> _mapGrid;
+
     float _dificulty;
     Cell *_center = 0;
     SfmlDisplay *_sfml;
