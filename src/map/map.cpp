@@ -48,6 +48,7 @@ int Cell::calcNearMine(Map &map){
                 else if (cell->_type == Cell::CellType::MINE)
                     count++;
             }
+    _nearMine = count;
     return _nearMine;
 }
 
@@ -92,12 +93,16 @@ void Map::init() {
     for (std::pair<uint64_t, Cell *> cell : _mapGrid) {
         delete cell.second;
     }
-
-    Cell *cell = acess(0, 0);
-    cell->_proba = 0;
-    cell->_type = Cell::CellType::EMPTY;
-    cell->_certitude = 1;
-    clickOnCell(0, 0);
+    for (int x = -3; x <= 3; ++x)
+        for (int y = -3; y <= 3; ++y) {
+            Cell *cell = acess(x, y);
+            cell->_proba = 0;
+            cell->_type = Cell::CellType::EMPTY;
+            cell->_certitude = 1;
+            _list_mutex.lock();
+            _list.emplace_back(x, y);
+            _list_mutex.unlock();
+        }
 }
 
 Map::~Map() {
@@ -107,6 +112,19 @@ Map::~Map() {
 
 bool Map::clickOnCell(int x, int y){
     bool ret = false;
+    std::cout << "click" << std::endl;
+    while (1) {
+        {
+            std::lock_guard<std::mutex> lock(_list_mutex);
+            if (!_need_estimate) {
+                _need_estimate = true;
+                break;
+            }
+        }
+        std::cout << "wait" << std::endl;
+        std::this_thread::sleep_for(std::chrono::microseconds((int)1E6/60));
+    }
+    std::cout << "go" << std::endl;
     _grid_mutex.lock_read();
     Cell * const &cell = acess(x, y);
     
@@ -300,7 +318,7 @@ void Map::brutetalizing(Part *part, int mirador_inc = 0){
             cell->_brutalised = false;
             cell->_proba = backup[i];
             i++;
-        }
+        }   
     }
     cell->_brutalised = false;
 }   
@@ -351,8 +369,8 @@ void Map::evaluatorlv2(Cell *cell) {
 }
 
 
-void Map::estimatorlv2(int nb){
-    while (_toEstimatelv2.size() > 0 && (nb > 0 || nb <= -1)){
+void Map::estimatorlv2(){
+    while (_toEstimatelv2.size() > 0){
         Vector2i vec = _toEstimatelv2.front();
         _toEstimatelv2.pop_front();
 
@@ -374,7 +392,6 @@ void Map::estimatorlv2(int nb){
             continue;
         }
         evaluatorlv2(cell);
-        nb--;
     }
 }
 
@@ -387,10 +404,8 @@ void Map::estimatorCell(Vector2i vec){
         }
 }
 
-void Map::estimator(int nb) {
-    if (nb == 0)
-        nb = 16 + (_toEstimate.size())/64;
-    while (_toEstimate.size() > 0 && (nb > 0 || nb <= -1)){
+void Map::estimator() {
+    while (_toEstimate.size() > 0){
         Vector2i vec = _toEstimate.front();
         _toEstimate.pop_front();
         _XYminmax_mutex.lock();
@@ -404,7 +419,6 @@ void Map::estimator(int nb) {
             continue;
         }
         _grid_mutex.unlock_write();
-        nb--;
         int count = 0;
         int risk = 0;
         int certainMine = 0;
@@ -466,17 +480,12 @@ void Map::estimator(int nb) {
     else
         tmp = 5;
     if (tmp < 0)
-        estimatorlv2(1);
+        estimatorlv2();
 }
 
-void Map::generate(int nb){
-    if (nb == 0){
-        _list_mutex.lock();
-        nb = 16 + (_list.size())/64;
-        _list_mutex.unlock();
-    }
+void Map::generate(){
     _list_mutex.lock();
-    while (_list.size() > 0 && (nb > 0 || nb <= -1)){
+    while (_list.size() > 0){
         Vector2i vec = _list.front();
         _list.pop_front();
         _XYminmax_mutex.lock();
@@ -484,22 +493,18 @@ void Map::generate(int nb){
         _XYminmax_mutex.unlock();
         _list_mutex.unlock();
         _grid_mutex.lock_read();
-        if (acess(vec.x, vec.y)->_discovered == true){
+        Cell *cell = acess(vec.x, vec.y);
+        if (cell->_discovered == true){
             _grid_mutex.unlock_read();
             _list_mutex.lock();
             continue;
         }
-        nb--;
         _XYminmax_mutex.lock();
         _nbCellDiscovered++;
         _XYminmax_mutex.unlock();
-        acess(vec.x, vec.y)->_discovered = true;
-        int count = 0;
-        for (int x = -1; x <= 1; ++x)
-            for (int y = -1; y <= 1; ++y)
-                if (acess(vec.x+x, vec.y+y)->_type == Cell::CellType::MINE)
-                    count++;
-        acess(vec.x, vec.y)->_nearMine = count;
+        cell->_discovered = true;
+        cell->calcNearMine(*this);
+        int count = cell->_nearMine;
         _grid_mutex.unlock_read();
         if (count == 0){
             for (int x = -1; x <= 1; ++x)
@@ -518,10 +523,15 @@ void Map::generate(int nb){
     }
     if (_list.size() == 0){
         _list_mutex.unlock();
-        estimator(0);
+        estimator();
     } else {
         _list_mutex.unlock();
     }
+    _list_mutex.lock();
+    if (_need_estimate)
+        std::cout << "estimate END" << std::endl;
+    _need_estimate = false;
+    _list_mutex.unlock();
 }
 
 void Map::displayOnTerm(){

@@ -18,7 +18,7 @@ SUPP = --suppressions=./valSup.supp #--gen-suppressions=all
 valgrind: fclean
 	clear
 	g++ -g -o $(NAME) $(SRC) $(FLAGS)
-	valgrind --leak-check=full --track-origins=yes --show-leak-kinds=definite $(SUPP) ./$(NAME) | cat -e #&> valgrind_log
+	valgrind --track-origins=yes $(SUPP) ./$(NAME) | cat -e #&> valgrind_log
 
 hellgrind: fclean
 	clear

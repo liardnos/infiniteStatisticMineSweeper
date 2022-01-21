@@ -37,7 +37,7 @@ void SfmlDisplay::main_loop(){
     bool go = true;
     std::thread predition_thread([this, &go](){
         while (go) {
-            this->_map->generate(1E6);
+            this->_map->generate();
             std::this_thread::sleep_for(std::chrono::microseconds((int)1E6/60));
         }
     });
@@ -78,12 +78,37 @@ bool SfmlDisplay::display(){
             auto m = event.mouseButton;
             int x = round((m.x-_posx*_cellSize - _width/2.f)/_cellSize-0.5);
             int y = round((m.y-_posy*_cellSize - _height/2.f)/_cellSize-0.5);
-            
-            if (m.button == sf::Mouse::Button::Left)
-                if (_map->clickOnCell(x, y));   
+            std::cout << "click=" << m.button << std::endl;
+            std::cout << sf::Mouse::Button::Right << std::endl;
+            Cell *cell = _map->acess(x, y);
+            if (m.button == sf::Mouse::Button::Left) {
+                if (cell->_discovered) {
+                    int count = cell->_nearMine;
+                    for (int xx = -1; xx <= 1; ++xx)
+                        for (int yy = -1; yy <= 1; ++yy) {
+                            Cell *nearCell = _map->acess(x+xx, y+yy);
+                            if (nearCell->_flaged || nearCell->_hasExplode)
+                                count--;
+                        }
+                    std::cout << "mine dif=" << count << std::endl;
+                    if (!count) {
+                        for (int xx = -1; xx <= 1; ++xx)
+                            for (int yy = -1; yy <= 1; ++yy) {
+                                Cell *nearCell = _map->acess(x+xx, y+yy);
+                                if (!nearCell->_flaged && !nearCell->_hasExplode && !nearCell->_discovered)
+                                    _map->clickOnCell(x+xx, y+yy);
+                            }
+                    }
+                } else if (!cell->_flaged && _map->clickOnCell(x, y)) {
                     //_map->reset();
-            else if (m.button == sf::Mouse::Button::Right)
-                ;
+                }
+            } else if (m.button == sf::Mouse::Button::Right) {
+                if (cell && !cell->_discovered) {
+                    std::cout << "place flag" << std::endl;
+                    cell->_flaged = !cell->_flaged;
+                }
+            }
+
             
         } else if (event.type == sf::Event::MouseWheelMoved){
             float d = event.mouseWheel.delta;
@@ -126,6 +151,9 @@ bool SfmlDisplay::display(){
     sf::RectangleShape rectangle_has_explode(sf::Vector2f(_cellSize-2, _cellSize-2));
     rectangle_has_explode.setFillColor({255, 0, 0, 255});
 
+    sf::RectangleShape rectangle_is_flaged(sf::Vector2f(_cellSize-2, _cellSize-2));
+    rectangle_is_flaged.setFillColor({0xFF, 0xA5, 0, 255});
+
     static sf::Text *text = 0;
     if (!text) {
         text = new sf::Text();
@@ -159,7 +187,7 @@ bool SfmlDisplay::display(){
             }
 
             if (cell->_discovered == true){
-                //text->setCharacterSize(_fontSize);
+                text->setCharacterSize(_fontSize);
                 rect = &rectangle2;
                 rect->setPosition(_posx*_cellSize + x*_cellSize + _width/2, _posy*_cellSize + y*_cellSize + _height/2);
                 _window->draw(*rect);
@@ -176,15 +204,16 @@ bool SfmlDisplay::display(){
             } else {
                 if (cell->_hasExplode)
                     rect = &rectangle_has_explode;
-                else 
+                else if (cell->_flaged)
+                    rect = &rectangle_is_flaged;
+                else
                     rect = &rectangle1;
+
 
                 rect->setPosition(_posx*_cellSize + x*_cellSize + _width/2, _posy*_cellSize + y*_cellSize + _height/2);
                 _window->draw(*rect);
-                if (cell->_hasExplode)
-                    rect->setFillColor({255, 0, 0, 255});
                 
-                if (0) {
+                if (1) {
                     //draw proba
                     text->setCharacterSize(_fontSize/3);
                     text->setFillColor(colorRatio(sf::Color::Red, sf::Color::Green, cell->_proba));

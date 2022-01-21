@@ -38,12 +38,14 @@ public:
 
     int calcNearMine(Map &map);
 
+    CellType _type; // type just for map generation
     bool _discovered = false;
-    CellType _type;
-    bool _hasExplode = false; // user click on this bomb
     bool _flaged = false; // user flag this
+    bool _hasExplode = false; // user click on this bomb
+
     int _x;
     int _y;
+
     int _nearMine = 0; // nb of mine's neigbour
     float _proba = NAN; // proba to be a mine
     float _certitude = 0; // certitude of the proba (if == 1 and (_proba == 0 or _proba == 1) don't recalculate this cell)
@@ -93,10 +95,10 @@ public:
 
     void brutetalizing(Part *part, int mirador_inc);
     void evaluatorlv2(Cell *cell);
-    void estimatorlv2(int nb = 1);
+    void estimatorlv2();
     void estimatorCell(Vector2i vec);
-    void estimator(int nb = -1);
-    void generate(int nb = -1);
+    void estimator();
+    void generate();
     void insertXMin();
     void insertXMax();
     void insertYMin();
@@ -114,6 +116,8 @@ public:
         int _toEstimate_size = 0;
         int _toEstimatelv2_size = 0;
 
+
+    bool _need_estimate = false;
     std::mutex _list_mutex;
     std::deque<Vector2i> _list;
     std::deque<Vector2i> _toEstimate;
