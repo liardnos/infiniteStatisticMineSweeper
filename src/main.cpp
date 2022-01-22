@@ -7,7 +7,7 @@ int main(int argc, char **argv)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
-    float dif = 0.3;
+    float dif = 0.2;
     if (argc == 2) {
         dif = std::stof(argv[1]);
     }

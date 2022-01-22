@@ -81,7 +81,15 @@ bool SfmlDisplay::display(){
             std::cout << "click=" << m.button << std::endl;
             std::cout << sf::Mouse::Button::Right << std::endl;
             Cell *cell = _map->acess(x, y);
-            if (m.button == sf::Mouse::Button::Left) {
+            if (m.button == sf::Mouse::Button::Right) {
+                if (!cell->_flaged && _map->clickOnCell(x, y)) {
+                    //_map->reset();
+                }
+            } else if (m.button == sf::Mouse::Button::Left) {
+                if (cell && !cell->_discovered) {
+                    std::cout << "place flag" << std::endl;
+                    cell->_flaged = !cell->_flaged;
+                }
                 if (cell->_discovered) {
                     int count = cell->_nearMine;
                     for (int xx = -1; xx <= 1; ++xx)
@@ -99,13 +107,6 @@ bool SfmlDisplay::display(){
                                     _map->clickOnCell(x+xx, y+yy);
                             }
                     }
-                } else if (!cell->_flaged && _map->clickOnCell(x, y)) {
-                    //_map->reset();
-                }
-            } else if (m.button == sf::Mouse::Button::Right) {
-                if (cell && !cell->_discovered) {
-                    std::cout << "place flag" << std::endl;
-                    cell->_flaged = !cell->_flaged;
                 }
             }
 
@@ -116,10 +117,17 @@ bool SfmlDisplay::display(){
                 _fontSize += d;
                 _cellSize += d;
             }
-        } else if(event.type == sf::Event::GainedFocus)
+        } else if (event.type == sf::Event::GainedFocus) {
                 _focus = true;
-        else if(event.type == sf::Event::LostFocus)
+        } else if (event.type == sf::Event::LostFocus) {
                 _focus = false;
+        } else if (event.type == sf::Event::KeyPressed) {
+            if (event.key.code == sf::Keyboard::L) {
+                _map->saveInFile("map.isms");
+            } else if (event.key.code == sf::Keyboard::M) {
+                _map->loadFromFile("map.isms");
+            }
+        }
     }
     if (_focus){
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q))
@@ -213,7 +221,7 @@ bool SfmlDisplay::display(){
                 rect->setPosition(_posx*_cellSize + x*_cellSize + _width/2, _posy*_cellSize + y*_cellSize + _height/2);
                 _window->draw(*rect);
                 
-                if (1) {
+                if (0) {
                     //draw proba
                     text->setCharacterSize(_fontSize/3);
                     text->setFillColor(colorRatio(sf::Color::Red, sf::Color::Green, cell->_proba));

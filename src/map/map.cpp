@@ -17,6 +17,7 @@
 #include <chrono>
 #include <ctime>  
 #include <string.h>  
+#include <fstream>  
 
 #include "sfml.hpp"
 #include "map.hpp"
@@ -81,10 +82,6 @@ Map::Map(float dificulty) :
 }
 
 void Map::init() {
-    _Xmin = -1;
-    _Ymin= -1;
-    _Xmax = -1;
-    _Ymax= -1;
     _nbCellDiscovered = 0;
     _list_size = 0;
     _toEstimate_size = 0;
@@ -108,6 +105,58 @@ void Map::init() {
 Map::~Map() {
     for (std::pair<uint64_t, Cell *> cell : _mapGrid)
         delete cell.second;
+}
+
+bool Map::loadFromFile(std::string const &filename) {
+    std::cout << "loadFromFile" << std::endl;
+    _grid_mutex.lock_read();
+    std::ifstream file(filename);
+    if (!file.is_open())
+        return false;
+
+    file.read((char *)&_nbCellDiscovered, sizeof(_nbCellDiscovered));
+    file.read((char *)&_dificulty, sizeof(_dificulty));
+
+
+    size_t size;
+    file.read((char *)&size, sizeof(size));
+    for (std::pair<uint64_t, Cell *> cell : _mapGrid)
+        if (cell.second)
+            delete cell.second;
+    _mapGrid.clear();
+    std::cout << size << std::endl;
+    for (; size; size--) {
+        Cell *cell = new Cell;
+        file.read((char *)cell, sizeof(*cell));
+        acess(cell->_x, cell->_y) = cell;
+    }
+    _grid_mutex.unlock_read();
+    return true;
+}
+
+bool Map::saveInFile(std::string const &filename) {
+    std::cout << "saveInFile" << std::endl;
+    _grid_mutex.lock_read();
+    std::ofstream file(filename);
+
+    file.write((char *)&_nbCellDiscovered, sizeof(_nbCellDiscovered));
+    file.write((char *)&_dificulty, sizeof(_dificulty));
+    
+    if (!file.is_open())
+        return false;
+    size_t size = 0;
+    for (auto p : _mapGrid)
+        if (p.second)
+            size++;
+    std::cout << size << std::endl;
+    file.write((char *)&size, sizeof(size));
+    for (auto p : _mapGrid) {
+        Cell *cell = p.second;
+        if (cell)
+            file.write((char *)cell, sizeof(*cell));
+    }   
+    _grid_mutex.unlock_read();
+    return true;
 }
 
 bool Map::clickOnCell(int x, int y){
@@ -532,21 +581,4 @@ void Map::generate(){
         std::cout << "estimate END" << std::endl;
     _need_estimate = false;
     _list_mutex.unlock();
-}
-
-void Map::displayOnTerm(){
-    std::string sizeY;
-    sizeY = _Xmax - _Xmin;
-    std::string sizeX;
-    sizeX = _Ymax - _Ymin;
-
-    int inc = 0;
-
-    for (int y = _Ymin; y <= _Ymax; y++){
-        std::cout << std::setw(sizeY.size()+3) << inc + _Ymin << "  ";
-        inc++;
-        for (int x = _Xmin; x <= _Xmax; x++)
-            std::cout << (char)acess(x, y)->getChar() << " ";
-        std::cout << std::endl;
-    }
 }

@@ -15,11 +15,6 @@ valgrindclient: _clear all
 
 SUPP = --suppressions=./valSup.supp #--gen-suppressions=all
 
-valgrind: fclean
-	clear
-	g++ -g -o $(NAME) $(SRC) $(FLAGS)
-	valgrind --track-origins=yes $(SUPP) ./$(NAME) | cat -e #&> valgrind_log
-
 hellgrind: fclean
 	clear
 	g++ -g -o $(NAME) $(SRC) $(FLAGS)
