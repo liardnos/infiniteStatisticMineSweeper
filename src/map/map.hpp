@@ -24,9 +24,9 @@
 
 #include "sfml.hpp"
 #include "mySharedMutex.hpp"
+#include "dificultyModulator.hpp"
 
-class Cell
-{
+class Cell {
 public:
     enum CellType
     {
@@ -59,23 +59,20 @@ public:
     bool _mark = false;             // debug // red mark on cell
 };
 
-struct Vector2i
-{
+struct Vector2i {
     Vector2i(int x, int y) : x(x), y(y) {}
     int x;
     int y;
 };
 
-struct Part
-{
+struct Part {
     std::deque<Cell *> mirador;
     std::deque<Cell *> undiscover;
     int tot = 0;
     float certitude = 1;
 };
 
-class AMap
-{
+class AMap {
     virtual Cell *&acessWeak(int x, int y) = 0;
     virtual Cell *&acess(int x, int y) = 0;
     virtual Cell *&acess(Vector2i &vec) = 0;
@@ -83,10 +80,11 @@ class AMap
     virtual bool clickOnCell(int x, int y) = 0;
 };
 
-class Map : public AMap
-{
+class DificultyModulator;
+
+class Map : public AMap {
 public:
-    Map(float dificulty = 0.2);
+    Map(DificultyModulator &dificultyModulator);
     void init();
     ~Map();
 
@@ -128,7 +126,7 @@ public:
 
     std::unordered_map<uint64_t, Cell *> _mapGrid;
 
-    float _dificulty;
+    DificultyModulator &_dificulty;
     SfmlDisplay *_sfml;
 };
 

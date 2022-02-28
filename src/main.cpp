@@ -2,6 +2,7 @@
 #include <string>
 #include "map/map.hpp"
 #include "map/sfml.hpp"
+#include "map/dificultyModulator.hpp"
 
 int main(int argc, char **argv)
 {
@@ -11,7 +12,8 @@ int main(int argc, char **argv)
     if (argc == 2) {
         dif = std::stof(argv[1]);
     }
-    Map map(dif);
+    DificultyModulator dificultyModulator;
+    Map map(dificultyModulator);
 
     SfmlDisplay sfml(&map, 1920-20, 1080-20);
     sfml._window->setPosition({0, 0});

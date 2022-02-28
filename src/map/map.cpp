@@ -71,13 +71,14 @@ Cell *&Map::acess(Vector2i &vec) {
     Cell *&ptr = _mapGrid[pos];
 
     if (!ptr)
-        ptr = new Cell(_dificulty, vec.x, vec.y);
+        ptr = new Cell(_dificulty.getProbaCellIsMine(), vec.x, vec.y);
     return ptr;
 }
 
-Map::Map(float dificulty) :
-    _dificulty(dificulty)
+Map::Map(DificultyModulator &dificultyModulator) :
+    _dificulty(dificultyModulator)
 {
+    _dificulty.setMap(this);
     this->init();
 }
 
@@ -115,7 +116,7 @@ bool Map::loadFromFile(std::string const &filename) {
         return false;
 
     file.read((char *)&_nbCellDiscovered, sizeof(_nbCellDiscovered));
-    file.read((char *)&_dificulty, sizeof(_dificulty));
+    //file.read((char *)&_dificulty, sizeof(_dificulty));
 
 
     size_t size;
@@ -140,7 +141,7 @@ bool Map::saveInFile(std::string const &filename) {
     std::ofstream file(filename);
 
     file.write((char *)&_nbCellDiscovered, sizeof(_nbCellDiscovered));
-    file.write((char *)&_dificulty, sizeof(_dificulty));
+    //file.write((char *)&_dificulty, sizeof(_dificulty));
     
     if (!file.is_open())
         return false;
