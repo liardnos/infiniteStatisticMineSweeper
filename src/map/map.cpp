@@ -40,15 +40,16 @@ char Cell::getChar(){
 
 int Cell::calcNearMine(Map &map){
     int count = 0;
-        for (int x = -1; x <= 1; ++x)
-            for (int y = -1; y <= 1; ++y) {
-                Cell *cell = map.acess(_x+x, _y+y);
-                if (cell->_proba == 1)
-                    count++;
-                else if (cell->_proba == 0);
-                else if (cell->_type == Cell::CellType::MINE)
-                    count++;
-            }
+    for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+            Cell *cell = map.acess(_x+x, _y+y);
+            if (cell->_proba == 1)
+                count++;
+            else if (cell->_proba == 0);
+            else if (cell->_type == Cell::CellType::MINE)
+                count++;
+        }
+    }
     _nearMine = count;
     return _nearMine;
 }

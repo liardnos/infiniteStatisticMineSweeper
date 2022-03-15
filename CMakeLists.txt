@@ -27,6 +27,7 @@ endif()
 if (WIN32)
     include(${CMAKE_SOURCE_DIR}/build/conanbuildinfo.cmake)
 endif()
+
 conan_basic_setup(TARGETS)
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
     message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
