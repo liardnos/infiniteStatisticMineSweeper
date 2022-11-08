@@ -6,31 +6,34 @@
 */
 
 
+#define SDL_DISPLAY 1
+
 #pragma once
 
 #if SDL_DISPLAY
-#else
 
-#include <SFML/Graphics.hpp>
-#include <SFML/Audio.hpp>
 #include <iostream>
 #include <string>
 #include <thread>
 #include <deque>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 class Map;
 
-class SfmlDisplay {
+class Sdl2Display {
 public:
-    SfmlDisplay(Map *map, int win_width = 800, int win_heigh = 800);
+    Sdl2Display(Map *map, int win_width = 800, int win_heigh = 800);
 
-    ~SfmlDisplay();
+    ~Sdl2Display();
 
     void main_loop();
 
     unsigned char colorR(unsigned char a, unsigned char b, float r);
 
+    #if 0
     sf::Color colorRatio(sf::Color a, sf::Color b, float r);
+    #endif
 
     bool display();
 
@@ -39,11 +42,15 @@ public:
     float _posx = 0;
     float _posy = 0;
     Map *_map;
-    sf::Font _font;
+    SDL_Window *_window;
+    SDL_Renderer *_renderer;
+    TTF_Font *_font;
+
+    bool _windowOpen = true;
+
     int _interfaceFontSize = 30;
     int _cellSize = 40;
     int _fontSize = _cellSize-2;
-    sf::RenderWindow *_window;
     bool _focus = true;
 };
 

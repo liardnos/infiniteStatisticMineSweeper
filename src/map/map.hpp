@@ -22,7 +22,11 @@
 #include <shared_mutex>
 #include <setjmp.h>
 
+#if SDL_DISPLAY
+#include "sdl2.hpp"
+#else
 #include "sfml.hpp"
+#endif
 #include "mySharedMutex.hpp"
 #include "dificultyModulator.hpp"
 
@@ -127,7 +131,11 @@ public:
     std::unordered_map<uint64_t, Cell *> _mapGrid;
 
     DificultyModulator &_dificulty;
+    #if SDL_DISPLAY
+    Sdl2Display *_sfml;
+    #else
     SfmlDisplay *_sfml;
+    #endif
 };
 
 //static jmp_buf env_signal;

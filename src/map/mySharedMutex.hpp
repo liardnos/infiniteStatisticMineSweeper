@@ -22,7 +22,7 @@ public:
     void unlock_write(){
         _write.unlock();
         _read.unlock();
-    }
+    }   
 
     void try_lock_write(){
         

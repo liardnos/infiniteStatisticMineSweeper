@@ -22,6 +22,8 @@
 #include "sfml.hpp"
 #include "map.hpp"
 
+#define AUTO_CLICK 1
+
 Cell::Cell(float dificulty, int x, int y) {
     float a = ((float)rand()) / RAND_MAX;
     _type = (dificulty > a) ? MINE : EMPTY;
@@ -404,13 +406,13 @@ void Map::evaluatorlv2(Cell *cell) {
                 cell->_certitude = 1;
             cell->_updated = 255;
 
-            // auto click
-            // if (cell->_proba == 0) {
-            //     _grid_mutex.unlock_write();
-            //     clickOnCell(cell->_x, cell->_y);
-            //     _grid_mutex.lock_write();
+            // if (AUTO_CLICK) {// auto click
+            //     if (cell->_proba == 0) {
+            //         _grid_mutex.unlock_write();
+            //         clickOnCell(cell->_x, cell->_y);
+            //         _grid_mutex.lock_write();
+            //     }
             // }
-            //
 
         }
     }
@@ -511,11 +513,11 @@ void Map::estimator() {
                     if (cell->_discovered == false && cell->_proba != 1 && cell->_proba != 0){
                         cell->_proba = 0;
 
-                        // auto click
-                        // _grid_mutex.unlock_write();
-                        // clickOnCell(cell->_x, cell->_y);
-                        // _grid_mutex.lock_write();
-                        //
+                        // if (AUTO_CLICK) { // auto click
+                        //      _grid_mutex.unlock_write();
+                        //      clickOnCell(cell->_x, cell->_y);
+                        //      _grid_mutex.lock_write();
+                        // }
                         cell->_certitude = 1;
                         estimatorCell(Vector2i(vec.x+x, vec.y+y));
                     }

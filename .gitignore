@@ -1,5 +1,8 @@
 build/
+buildSFML/
+buildSDL/
 valSup.supp
 log
 .vscode
 minesSweeper
+cmake

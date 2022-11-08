@@ -2,7 +2,9 @@
 
 
 // DificultyModulator
-DificultyModulator::DificultyModulator() {}
+DificultyModulator::DificultyModulator(float mineRatio) :
+    _mineRatio(mineRatio)
+{}
 
 void DificultyModulator::setMap(Map *map) {
     _map = map;
@@ -18,7 +20,7 @@ bool DificultyModulator::clickOn(int x, int y) {
 }
 
 float DificultyModulator::getProbaCellIsMine() {
-    return 0.2;
+    return _mineRatio;
 }
 //
 
@@ -27,7 +29,7 @@ DificultyMax::DificultyMax() {}
 
 bool DificultyMax::clickOn(int x, int y) {
     Cell * const &cell = _map->acess(x, y);
-    if (0 > cell->_proba) {
+    if (1 == cell->_proba) {
         return 1;
     } else {
         return 0;

@@ -1,54 +1,113 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 project(infiniteStatisticalMineSweeper)
+set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_CXX_STANDARD 17)
 
-# Adding extra compilation flags for UNIX
-if (UNIX)
-    set(CMAKE_CXX_FLAGS "-Og")
-    add_compile_options(-Wall -Wextra)
+if (${SDL_DISPLAY})
+  ADD_DEFINITIONS(-DSDL_DISPLAY=1)
+  list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
+  find_package(SDL2 REQUIRED)
+  find_package(SDL2_image REQUIRED)
+  find_package(SDL2_ttf REQUIRED)
+  include_directories(${SDL2_INCLUDE_DIRS})
+else()
+  ADD_DEFINITIONS(-DSDL_DISPLAY=0)
 endif()
 
-set(EXECUTABLE_OUTPUT_PATH ..)
+# SFML 2.5
+#find_package(SFML 2.5 COMPONENTS graphics audio window system network QUIET)
 
+# Build types
 if (UNIX)
+    add_compile_options(-Wall -Wextra -Og )
     SET(CMAKE_BUILD_TYPE DEBUG)
-    # file(COPY ${CMAKE_SOURCE_DIR}/conanUNIX DESTINATION ${CMAKE_SOURCE_DIR}/conanfile.txt )
-endif()
-if (WIN32)
-    SET(CMAKE_BUILD_TYPE RELEASE)
-    # file(COPY ${CMAKE_SOURCE_DIR}/conanWIN DESTINATION ${CMAKE_SOURCE_DIR}/conanfile.txt )
+    #Install sfml if not already installed
+    if (NOT ${SDL_DISPLAY})
+      if (NOT SFML_FOUND)
+        include(FetchContent)
+
+        FetchContent_Declare(
+          SFML
+          URL https://www.sfml-dev.org/files/SFML-2.5.1-linux-gcc-64-bit.tar.gz
+        )
+        FetchContent_GetProperties(SFML)
+        if (NOT sfml_POPULATED)
+          set(FETCHCONTENT_QUIET NO)
+          FetchContent_Populate(sfml)
+          set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+          include_directories("${sfml_SOURCE_DIR}/include")
+        endif()
+      endif()
+    endif()
 endif()
 
-#Conan
+if (WIN32)
+    SET(CMAKE_BUILD_TYPE DEBUG)
+    file(COPY ${CMAKE_CURRENT_LIST_DIR}/assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/..)
+    # file(COPY assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../Release)
+    #Install sfml if not already installed
+    if (NOT SFML_FOUND)
+      include(FetchContent)
+
+      FetchContent_Declare(
+        SFML
+        URL https://www.sfml-dev.org/files/SFML-2.5.1-windows-vc15-64-bit.zip
+      )
+      FetchContent_GetProperties(SFML)
+      if (NOT sfml_POPULATED)
+        set(FETCHCONTENT_QUIET NO)
+        FetchContent_Populate(sfml)
+        set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+        include_directories("${sfml_SOURCE_DIR}/include")
+      endif()
+      file(GLOB SFML_LIB "${sfml_SOURCE_DIR}/bin/*.dll")
+      file(COPY ${SFML_LIB} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/..)
+    endif()
+endif()
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "Choose the type of build (Debug or Release)" FORCE)
+endif()
+
+
+
+add_executable(${PROJECT_NAME}
+    src/main.cpp
+    src/network/ByteObject.cpp
+    src/map/dificultyModulator.cpp
+    src/map/map.cpp
+    src/map/mySharedMutex.cpp
+    src/map/sfml.cpp
+    src/map/sdl2.cpp
+)
+
 if (UNIX)
-    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-endif() 
+  if (${SDL_DISPLAY})
+    target_link_libraries(${PROJECT_NAME}
+      SDL2::Main SDL2::Image SDL2::TTF
+    )
+  else()
+    target_link_libraries(${PROJECT_NAME}
+      ${sfml_SOURCE_DIR}/lib/libsfml-graphics.so
+      ${sfml_SOURCE_DIR}/lib/libsfml-audio.so
+      ${sfml_SOURCE_DIR}/lib/libsfml-window.so
+      ${sfml_SOURCE_DIR}/lib/libsfml-system.so
+      ${sfml_SOURCE_DIR}/lib/libsfml-network.so
+    )
+
+  endif()
+  target_link_libraries(${PROJECT_NAME} pthread)
+endif()
+
 if (WIN32)
-    include(${CMAKE_SOURCE_DIR}/build/conanbuildinfo.cmake)
+target_link_libraries(${PROJECT_NAME}
+  ${sfml_SOURCE_DIR}/lib/sfml-graphics-d.lib
+  ${sfml_SOURCE_DIR}/lib/sfml-audio-d.lib
+  ${sfml_SOURCE_DIR}/lib/sfml-window-d.lib
+  ${sfml_SOURCE_DIR}/lib/sfml-system-d.lib
+  ${sfml_SOURCE_DIR}/lib/sfml-network-d.lib
+)
 endif()
 
-conan_basic_setup(TARGETS)
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
-    message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-    file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/master/conan.cmake"
-                  "${CMAKE_BINARY_DIR}/conan.cmake")
-    include(${CMAKE_BINARY_DIR}/conan.cmake)
-endif()
-
-#Sources
-file(GLOB_RECURSE SRC_CLI RELATIVE 
-    ${CMAKE_SOURCE_DIR} "src/*.cpp"
-)
-
-link_directories(${CONAN_LIB_DIRS} ${CONAN_BIN_DIRS})
-
-
-#Client
-add_executable(infiniteStatisticalMineSweeper
-${SRC_CLI})
-
-target_link_libraries(infiniteStatisticalMineSweeper
-    ${CONAN_LIBS}
-    CONAN_PKG::sfml
-)
+# target_link_libraries(${PROJECT_NAME} sfml-graphics sfml-audio sfml-window sfml-system sfml-network)
+set(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)

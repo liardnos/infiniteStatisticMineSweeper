@@ -6,7 +6,7 @@ class Map;
 
 class DificultyModulator {
 public:
-    DificultyModulator();
+    DificultyModulator(float mineRatio = 0.2);
 
     void setMap(Map *map);
 
@@ -14,6 +14,7 @@ public:
 
     virtual float getProbaCellIsMine();
 
+    float _mineRatio;
     Map *_map;
 };
 

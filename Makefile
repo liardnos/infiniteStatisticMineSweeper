@@ -1,19 +1,51 @@
 
 NAME = infiniteStatisticalMineSweeper
 
-all:
-	cd build && make -j 8 || clear && make
+all: SFML SDL
 
-client: all
-	./build/bin/$(NAME)
+re: reSFML reSDL
 
-_clear:
-	clear
+run: SFML SDL
+	cd buildSDL && ./$(NAME) & cd buildSFML && ./$(NAME)
 
-valgrindclient: _clear all
-	valgrind --leak-check=full --track-origins=yes ./build/bin/$(NAME)
 
-SUPP = --suppressions=./valSup.supp #--gen-suppressions=all
+reSFML:
+	rm -rf buildSFML
+	mkdir buildSFML; cd buildSFML && cmake -D SDL_DISPLAY=OFF .. && make -j6
+	cp -r ./font ./buildSFML
+
+SFML:
+	cd buildSFML && rm -f $(NAME)
+	cd buildSFML && make -j6 || clear && make
+
+runSFML: SFML
+	cd buildSFML && ./$(NAME)
+
+SFMLValgrind: SFML
+	##########################################################
+	#                       VALGRIND                         #
+	##########################################################
+	cd buildSFML && valgrind --track-origins=yes ./$(NAME)
+
+reSDL:
+	rm -rf buildSDL
+	mkdir buildSDL; cd buildSDL && cmake -D SDL_DISPLAY=ON .. && make -j6
+	cp -r ./font ./buildSDL
+
+SDL:
+	cd buildSDL
+	cd buildSDL && make -j6 || clear && make
+
+runSDL: SDL
+	cd buildSDL && ./$(NAME)
+
+SDLValgrind: SDL
+	##########################################################
+	#                       VALGRIND                         #
+	##########################################################
+	cd buildSDL && valgrind --track-origins=yes ./$(NAME)
+
+
 
 hellgrind: fclean
 	clear
