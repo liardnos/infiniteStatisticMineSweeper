@@ -45,6 +45,7 @@ public:
     SDL_Window *_window;
     SDL_Renderer *_renderer;
     TTF_Font *_font;
+    Uint8 const *_sdlKeyboardState; 
 
     bool _windowOpen = true;
 

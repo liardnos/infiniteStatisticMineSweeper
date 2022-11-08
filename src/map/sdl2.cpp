@@ -34,6 +34,9 @@ Sdl2Display::Sdl2Display(Map *map, int win_width, int win_heigh) :
     );
 
     _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
+    
+    SDL_SetRenderDrawBlendMode(_renderer, SDL_BLENDMODE_BLEND);
+    _sdlKeyboardState = SDL_GetKeyboardState(NULL);
 
     TTF_Init();
     _font = TTF_OpenFont("./font/font.ttf", 24);
@@ -105,6 +108,7 @@ bool Sdl2Display::display(){
     if (!_windowOpen)
         return false;
 
+    SDL_PumpEvents();
     SDL_Event e;
     while (SDL_PollEvent(&e) > 0) {
         if (e.type == SDL_QUIT) {
@@ -178,6 +182,16 @@ bool Sdl2Display::display(){
             _posy -= 0.25;
     }
     #else
+    if (_focus){
+        if (_sdlKeyboardState[SDL_SCANCODE_LEFT] || _sdlKeyboardState[SDL_SCANCODE_A])
+            _posx += 0.25;
+        if (_sdlKeyboardState[SDL_SCANCODE_RIGHT] || _sdlKeyboardState[SDL_SCANCODE_D])
+            _posx -= 0.25;
+        if (_sdlKeyboardState[SDL_SCANCODE_UP] || _sdlKeyboardState[SDL_SCANCODE_W])
+            _posy += 0.25;
+        if (_sdlKeyboardState[SDL_SCANCODE_DOWN] || _sdlKeyboardState[SDL_SCANCODE_S])
+            _posy -= 0.25;
+    }
     #endif
 
     SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 0);
@@ -318,7 +332,7 @@ bool Sdl2Display::display(){
                 #else
                 rectangle1.x = _posx*_cellSize + x*_cellSize + _width/2;
                 rectangle1.y =  _posy*_cellSize + y*_cellSize + _height/2;
-                SDL_SetRenderDrawColor(_renderer, 0, 0, 255, 255);
+                SDL_SetRenderDrawColor(_renderer, 0, 0, 255, cell->_updated);
                 SDL_RenderFillRect(_renderer, &rectangle1);
                 #endif
             }
