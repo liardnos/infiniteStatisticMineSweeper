@@ -5,7 +5,6 @@
 ** sfml
 */
 
-#define SDL_DISPLAY 1
 
 
 #if SDL_DISPLAY

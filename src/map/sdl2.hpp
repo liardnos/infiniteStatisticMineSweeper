@@ -6,8 +6,6 @@
 */
 
 
-#define SDL_DISPLAY 1
-
 #pragma once
 
 #if SDL_DISPLAY

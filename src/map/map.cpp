@@ -182,7 +182,7 @@ bool Map::clickOnCell(int x, int y){
     Cell * const &cell = acess(x, y);
     
     // statistic displacement way
-    if (cell->_proba > 0) {
+    if (cell->_proba == 1) {
         // lose
         ret = true;
         cell->_hasExplode = true;
@@ -207,7 +207,7 @@ bool Map::clickOnCell(int x, int y){
 }
 
 bool Map::validate(std::deque<Cell *> &list) {
-    for (Cell *cell : list){
+    for (Cell *cell : list) {
         int count = 0;
         int risk = 0;
         int certainMine = 0;
