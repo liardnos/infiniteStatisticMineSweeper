@@ -21,7 +21,7 @@ public:
 
 class DificultyMax : public DificultyModulator {
 public:
-    DificultyMax();
+    DificultyMax(float mineRatio = 0.2);
 
     virtual bool clickOn(int x, int y) override;
 
@@ -29,7 +29,7 @@ public:
 
 class DificultyMin : public DificultyModulator {
 public:
-    DificultyMin();
+    DificultyMin(float mineRatio = 0.2);
 
     virtual bool clickOn(int x, int y) override;
 

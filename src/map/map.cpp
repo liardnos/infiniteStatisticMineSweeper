@@ -174,7 +174,8 @@ bool Map::clickOnCell(int x, int y){
                 break;
             }
         }
-        std::cout << "wait" << std::endl;
+        // std::cout << "wait" << std::endl;
+        break;
         std::this_thread::sleep_for(std::chrono::microseconds((int)1E6/60));
     }
     std::cout << "go" << std::endl;
@@ -182,7 +183,7 @@ bool Map::clickOnCell(int x, int y){
     Cell * const &cell = acess(x, y);
     
     // statistic displacement way
-    if (cell->_proba == 1) {
+    if (cell->_proba > 0) {
         // lose
         ret = true;
         cell->_hasExplode = true;
@@ -406,13 +407,13 @@ void Map::evaluatorlv2(Cell *cell) {
                 cell->_certitude = 1;
             cell->_updated = 255;
 
-            // if (AUTO_CLICK) {// auto click
-            //     if (cell->_proba == 0) {
-            //         _grid_mutex.unlock_write();
-            //         clickOnCell(cell->_x, cell->_y);
-            //         _grid_mutex.lock_write();
-            //     }
-            // }
+            if (AUTO_CLICK) {// auto click
+                if (cell->_proba == 0) {
+                    _grid_mutex.unlock_write();
+                    clickOnCell(cell->_x, cell->_y);
+                    _grid_mutex.lock_write();
+                }
+            }
 
         }
     }
@@ -513,11 +514,11 @@ void Map::estimator() {
                     if (cell->_discovered == false && cell->_proba != 1 && cell->_proba != 0){
                         cell->_proba = 0;
 
-                        // if (AUTO_CLICK) { // auto click
-                        //      _grid_mutex.unlock_write();
-                        //      clickOnCell(cell->_x, cell->_y);
-                        //      _grid_mutex.lock_write();
-                        // }
+                        if (AUTO_CLICK) { // auto click
+                             _grid_mutex.unlock_write();
+                             clickOnCell(cell->_x, cell->_y);
+                             _grid_mutex.lock_write();
+                        }
                         cell->_certitude = 1;
                         estimatorCell(Vector2i(vec.x+x, vec.y+y));
                     }

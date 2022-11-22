@@ -25,11 +25,13 @@ float DificultyModulator::getProbaCellIsMine() {
 //
 
 // DificultyMax
-DificultyMax::DificultyMax() {}
+DificultyMax::DificultyMax(float mineRatio) :
+    DificultyModulator(mineRatio)
+{}
 
 bool DificultyMax::clickOn(int x, int y) {
     Cell * const &cell = _map->acess(x, y);
-    if (1 == cell->_proba) {
+    if (0 > cell->_proba) {
         return 1;
     } else {
         return 0;
@@ -38,7 +40,9 @@ bool DificultyMax::clickOn(int x, int y) {
 //
 
 // DificultyMin
-DificultyMin::DificultyMin() {}
+DificultyMin::DificultyMin(float mineRatio) :
+    DificultyModulator(mineRatio)
+{}
 
 bool DificultyMin::clickOn(int x, int y) {
     Cell * const &cell = _map->acess(x, y);
